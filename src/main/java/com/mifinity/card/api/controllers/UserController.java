@@ -27,7 +27,8 @@ public class UserController {
     private PasswordEncoder passwordEncoder;
 
     @PostMapping()
-    @PreAuthorize("hasAnyRole('ADMIN')")
+    @RequestMapping("/create")
+//  @PreAuthorize("hasAnyRole('ADMIN')") Maybe only ADMINs could create users
     public ResponseEntity<Response<User>> insert(HttpServletRequest request, @RequestBody User user,
                                                  BindingResult result) {
         Response<User> response = new Response<User>();
@@ -39,6 +40,7 @@ public class UserController {
             }
             user.setPassword(passwordEncoder.encode(user.getPassword()));
             User userPersisted = (User) userService.insert(user);
+            userPersisted.setPassword(null);
             response.setData(userPersisted);
         } catch (DuplicateKeyException dE) {
             response.getErrors().add("E-mail already registered !");
@@ -67,6 +69,7 @@ public class UserController {
             response.getErrors().add("Register not found id:" + id);
             return ResponseEntity.badRequest().body(response);
         }
+        user.setPassword(null);
         response.setData(user);
         return ResponseEntity.ok(response);
     }

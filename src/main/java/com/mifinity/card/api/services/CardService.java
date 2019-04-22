@@ -7,7 +7,7 @@ import java.util.Optional;
 
 public interface CardService {
 
-    Card createOrUpdate(Card ticket);
+    Card createOrUpdate(Card card);
 
     Optional<Card> findByNumberSpecific(String number);
 

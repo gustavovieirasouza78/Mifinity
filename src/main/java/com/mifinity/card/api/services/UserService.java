@@ -1,7 +1,6 @@
 package com.mifinity.card.api.services;
 
 import com.mifinity.card.api.entities.User;
-import org.springframework.data.domain.Page;
 
 import java.util.Optional;
 

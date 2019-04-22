@@ -38,7 +38,7 @@ public class CardController {
                                                  BindingResult result) {
         Response<Card> response = new Response<>();
         try {
-            validateCreateTicket(card, result);
+            validateCreateCard(card, result);
             if (result.hasErrors()) {
                 result.getAllErrors().forEach(error -> response.getErrors().add(error.getDefaultMessage()));
                 return ResponseEntity.badRequest().body(response);
@@ -53,11 +53,15 @@ public class CardController {
         return ResponseEntity.ok(response);
     }
 
-    private void validateCreateTicket(Card card, BindingResult result) {
+    private void validateCreateCard(Card card, BindingResult result) {
         if (card.getExpiration() == null) {
             result.addError(new ObjectError("Data", "Expiration Data need be informed"));
-            return;
         }
+        Optional<Card> cardCurrentOptional = cardService.findByNumberSpecific(card.getNumber());
+        if(cardCurrentOptional.isPresent()){
+            result.addError(new ObjectError("Number", "This card already exist"));
+        }
+        return;
     }
 
     public User userFromRequest(HttpServletRequest request) throws Exception {
@@ -67,25 +71,22 @@ public class CardController {
     }
 
     @PutMapping()
-    @PreAuthorize("hasAnyRole('CUSTOMER')")
+    @PreAuthorize("hasAnyRole('CUSTOMER','ADMIN')")
     public ResponseEntity<Response<Card>> update(HttpServletRequest request, @RequestBody Card card,
                                                  BindingResult result) {
         Response<Card> response = new Response<Card>();
         try {
-            validateUpdateTicket(card, result);
+            validateUpdateCard(card, result);
             if (result.hasErrors()) {
                 result.getAllErrors().forEach(error -> response.getErrors().add(error.getDefaultMessage()));
                 return ResponseEntity.badRequest().body(response);
             }
             Optional<Card> cardCurrentOptional = cardService.findByNumberSpecific(card.getNumber());
             Card cardCurrent = cardCurrentOptional.get();
-            card.setNumber(cardCurrent.getNumber());
-            card.setName(cardCurrent.getName());
-            card.setId(cardCurrent.getId());
-            if(cardCurrent.getUserCreator() != null) {
-                card.setUserCreator(cardCurrent.getUserCreator());
-            }
-            Card cardPersisted = (Card) cardService.createOrUpdate(card);
+            cardCurrent.setExpiration(card.getExpiration());
+
+            Card cardPersisted = (Card) cardService.createOrUpdate(cardCurrent);
+
             response.setData(cardPersisted);
         } catch (Exception e) {
             response.getErrors().add(e.getMessage());
@@ -94,45 +95,34 @@ public class CardController {
         return ResponseEntity.ok(response);
     }
 
-    private void validateUpdateTicket(Card card, BindingResult result) {
+    private void validateUpdateCard(Card card, BindingResult result) {
         if (card.getNumber() == null) {
             result.addError(new ObjectError("Card", "Card need to be informed!"));
             return;
         }
+        if (card.getExpiration() == null) {
+            result.addError(new ObjectError("Data", "Expiration Data need be informed"));
+            return;
+        }
     }
 
-    @GetMapping(value = "{page}/{count}/{number}/{creator}")
-    @PreAuthorize("hasAnyRole('CUSTOMER')")
-    public ResponseEntity<Response<Page<Card>>> findForCustomer(HttpServletRequest request,
+    @GetMapping(value = "{page}/{count}/{number}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    public ResponseEntity<Response<Page<Card>>> findCards(HttpServletRequest request,
                                                              @PathVariable int page,
                                                              @PathVariable int count,
-                                                             @PathVariable String number,
-                                                             @PathVariable String creator) throws Exception {
+                                                             @PathVariable String number) throws Exception {
 
 
         Response<Page<Card>> response = new Response<Page<Card>>();
         Page<Card> cards = null;
 
         User userRequest = userFromRequest(request);
-
-        cards = cardService.findByNumberAndCreator(page, count, number, userRequest.getId());
-
-        response.setData(cards);
-        return ResponseEntity.ok(response);
-    }
-
-    @GetMapping(value = "{page}/{count}/{number}")
-    @PreAuthorize("hasAnyRole('ADMIN')")
-    public ResponseEntity<Response<Page<Card>>> findForAdmin(HttpServletRequest request,
-                                                                @PathVariable int page,
-                                                                @PathVariable int count,
-                                                                @PathVariable String number) throws Exception {
-
-
-        Response<Page<Card>> response = new Response<Page<Card>>();
-        Page<Card> cards = null;
-
-        cards = cardService.findByNumber(page, count, number);
+        if(userRequest.getProfile().name().equals("ROLE_ADMIN")) {
+            cards = cardService.findByNumber(page, count, number);
+        }else{
+            cards = cardService.findByNumberAndCreator(page, count, number, userRequest.getId());
+        }
 
         response.setData(cards);
         return ResponseEntity.ok(response);

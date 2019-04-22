@@ -59,6 +59,7 @@ public class AuthenticationRestController {
         String token = request.getHeader("Authorization");
         String username = jwtTokenUtil.getUserNameFromToken(token);
         final User user = userService.findByEmail(username);
+        user.setPassword(null);
 
         if (jwtTokenUtil.canTokenBeRefreshed(token)) {
             String refreshedToken = jwtTokenUtil.refreshToken(token);
