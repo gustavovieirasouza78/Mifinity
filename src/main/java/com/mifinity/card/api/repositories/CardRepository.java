@@ -12,6 +12,10 @@ public interface CardRepository extends MongoRepository<Card, String> {
 
     Optional<Card> findByNumber(String number);
 
+    Page<Card> findAll(Pageable pages);
+
+    Page<Card> findByUserCreatorId(Pageable pages, String userCreator);
+
     Page<Card> findByNumberContainingOrderByNumberDesc(Pageable pages, String number);
 
     Page<Card> findByNumberContainingAndUserCreatorIdOrderByNumberDesc(Pageable pages, String number, String userCreator);

@@ -36,4 +36,14 @@ public class CardServiceImpl implements CardService {
     public Page<Card> findByNumberAndCreator(int page, int count, String number, String userId) {
         return this.cardRepository.findByNumberContainingAndUserCreatorIdOrderByNumberDesc(PageRequest.of(page,count),number,userId);
     }
+
+    @Override
+    public Page<Card> findAll(int page, int count) {
+        return this.cardRepository.findAll(PageRequest.of(page,count));
+    }
+
+    @Override
+    public Page<Card> findAllByUserCreator(int page, int count, String userId) {
+        return this.cardRepository.findByUserCreatorId(PageRequest.of(page,count),userId);
+    }
 }

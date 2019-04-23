@@ -127,4 +127,25 @@ public class CardController {
         response.setData(cards);
         return ResponseEntity.ok(response);
     }
+
+    @GetMapping(value = "{page}/{count}")
+    @PreAuthorize("hasAnyRole('CUSTOMER', 'ADMIN')")
+    public ResponseEntity<Response<Page<Card>>> findAll(HttpServletRequest request,
+                                                          @PathVariable int page,
+                                                          @PathVariable int count) throws Exception {
+
+
+        Response<Page<Card>> response = new Response<Page<Card>>();
+        Page<Card> cards = null;
+
+        User userRequest = userFromRequest(request);
+        if(userRequest.getProfile().name().equals("ROLE_ADMIN")) {
+            cards = cardService.findAll(page, count);
+        }else{
+            cards = cardService.findAllByUserCreator(page, count, userRequest.getId());
+        }
+
+        response.setData(cards);
+        return ResponseEntity.ok(response);
+    }
 }
